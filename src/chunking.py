@@ -1,7 +1,11 @@
 import nltk
 from nltk.tokenize import sent_tokenize
 
-nltk.download("punkt")
+# Download required NLTK data
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download("punkt_tab", quiet=True)
 
 
 def chunk_text(text, max_tokens=800, overlap=100):
