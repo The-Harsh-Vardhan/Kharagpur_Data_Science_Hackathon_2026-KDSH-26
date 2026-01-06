@@ -1,0 +1,10 @@
+sentence-transformers
+faiss-cpu
+nltk
+scikit-learn
+numpy
+pandas
+pathway
+google-generativeai
+tqdm
+python-dotenv
