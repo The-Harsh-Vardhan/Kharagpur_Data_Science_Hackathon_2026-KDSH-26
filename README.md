@@ -1,5 +1,40 @@
-# Kharagpur Data Science Hackathon 2026  
-## Track A — Narrative Consistency Reasoning System
+# Kharagpur Data Science Hackathon 2026
+## Track A: Narrative Consistency Reasoning System
+
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-classifier-orange.svg)](https://scikit-learn.org/)
+[![FAISS](https://img.shields.io/badge/FAISS-vector%20search-green.svg)](https://github.com/facebookresearch/faiss)
+
+An evidence-grounded pipeline that decides whether a hypothetical character backstory is logically consistent with a full-length novel (100k+ words). It retrieves relevant passages per claim, has an LLM label each claim-evidence pair, aggregates the signals, and trains a lightweight classifier for the final 1/0 judgment.
+
+Docs: https://the-harsh-vardhan.github.io/Kharagpur_Data_Science_Hackathon_2026-KDSH-26/
+
+### What it does
+- Chunks novels (800 tokens, 100 overlap) and embeds them with `all-mpnet-base-v2`
+- Indexes chunks in FAISS and retrieves the top-5 passages per backstory claim
+- Uses Gemini (`gemini-2.0-flash-exp`) to label each claim-evidence pair `CONTRADICT`, `SUPPORT` or `NEUTRAL`
+- Aggregates scores into max, mean and strong-contradiction count, then fits a Logistic Regression
+- Writes predictions as `id,label` (`1` = consistent, `0` = contradicts)
+
+### Architecture
+
+```mermaid
+flowchart LR
+    N["Novel .txt"] -->|"chunk 800 tok, overlap 100"| C["chunking.py"]
+    C -->|"chunks"| E["embeddings.py<br/>all-mpnet-base-v2"]
+    E -->|"vectors"| V[("FAISS index<br/>retrieval.py")]
+    B["Backstory"] -->|"split into claims"| Q["claim embedding"]
+    Q -->|"top-5 search"| V
+    V -->|"evidence chunks"| L["gemini_llm.py<br/>CONTRADICT / SUPPORT / NEUTRAL"]
+    L -->|"claim scores"| A["aggregation.py<br/>max, mean, count"]
+    A -->|"features"| K["train_classifier.py<br/>Logistic Regression"]
+    K --> O["id,label predictions"]
+```
+
+### Status and results
+No measured accuracy is committed to this repository: `training_log.txt` records a failed first run (missing NLTK `punkt` data) and no validation score. The `70-80%+` figures in the Baseline Strategy section below are design targets, not results. `run_train.py` prints a validation accuracy (80/20 split) when run with your own data and API key.
+
+---
 
 ---
 
@@ -51,7 +86,7 @@ The solution follows an evidence-grounded reasoning pipeline:
 7. **Final Classification**
    - Logistic Regression / threshold-based decision
 
-Pathway is used as a **document ingestion and orchestration layer**, satisfying Track A requirements.
+Pathway is the planned **document ingestion and orchestration layer** for Track A; it is listed in `requirements.txt` but not yet imported by the scripts (see the open issue).
 
 ---
 
@@ -176,7 +211,7 @@ This system outperforms naïve LLM approaches by:
 - Penalizing overconfident hallucinations
 - Explicitly modeling contradictions
 
-Expected performance:
+Target performance (design goals, not measured results):
 
 - Random baseline: ~50%
 - Naïve LLM prompting: ~60–65%
@@ -215,7 +250,7 @@ CONTRADICT, SUPPORT, or NEUTRAL.
 - ✔ Long-context handling
 - ✔ Evidence-based reasoning
 - ✔ Explicit aggregation logic
-- ✔ Pathway used meaningfully
+- ◻ Pathway integration (planned; not yet used in the code)
 - ✔ Deterministic, explainable outputs
 
 ## 🏁 Final Notes
@@ -361,7 +396,7 @@ Rather than asking a model to *imagine* whether a backstory feels plausible, the
 
 ### Track A Compliance
 
-- Pathway is used as a document ingestion and orchestration layer
+- Pathway is the planned document ingestion and orchestration layer (not yet imported by the scripts)
 - Long-context narratives are processed without truncation
 - The system emphasizes robustness, traceability, and correctness
 - No end-to-end generation is used for final decision-making
